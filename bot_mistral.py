@@ -1,4 +1,4 @@
-from typing import List, Dict, Union, Optional, Any, Tuple
+from typing import List, Dict, Optional, Any
 from config import TOKEN
 import requests
 import base64
