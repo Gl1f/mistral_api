@@ -72,8 +72,10 @@ class ImageRequest:
         
         Args:
             api_key (str): Ключ API для доступа к сервису Mistral.
+            messages (List[Dict[str, Any]]): Список сообщений для отправки.
         """
         self.api_key: str = api_key
+        self.messages: List[Dict[str, Any]] = []
 
     def send(self, text: str, image: str, model: str) -> Dict[str, Any]:
         """
@@ -91,7 +93,6 @@ class ImageRequest:
         self.image_data: str = image
         self.model: str = model
         self.TOKEN: str = self.api_key
-        self.messages: List[Dict[str, Any]] = []
         self.url: str = "https://api.mistral.ai/v1/chat/completions"
         self.headers: Dict[str, str] = {
             "Authorization": f"Bearer {self.TOKEN}",
@@ -153,7 +154,11 @@ class ChatFacade:
         self.mode = input("Выберите режим работы: 1 - текст, 2 - текст и изображение: ")
         if self.mode == "1":
             return "1"
-        return "2"
+        elif self.mode == '2':
+            return "2"
+        else:
+            print("Неверный выбор режима. Повторите ввод.")
+            return self.select_mode()
 
     def select_model(self, mode: str) -> str:
         """
@@ -179,12 +184,18 @@ class ChatFacade:
             for i in range(len(self.models_1)):
                 print(f"{i + 1}. {self.models_1[i]}")
             num = input()
+            if num not in ["1", "2", "3"]:
+                print("Неверный выбор модели. Повторите ввод.")
+                return self.select_model(mode)
             return self.models_1[int(num) - 1]
-        else:
+        elif mode == "2":
             self.image_request = ImageRequest(self.api_key)
             for i in range(len(self.models_2)):
                 print(f"{i + 1}. {self.models_2[i]}")
             num = input()
+            if num != '1':
+                print("Неверный выбор модели. Повторите ввод.")
+                return self.select_model(mode)
             return self.models_2[int(num) - 1]
 
     def load_image(self, image_path: str) -> Optional[str]:
@@ -280,13 +291,22 @@ if __name__ == "__main__":
             question = input()
             response: Dict[str, Any] = chat.ask_question(question, model, image_path)
         elif question == "2":
-            print("История:")
-            data: List[Dict[str, Any]] = chat.get_history()
-            for message in data:
-                if message["role"] == "user":
-                    print(f"Вы: {message['content']}")
-                else:
-                    print(f"Бот: {message['content']}")
+            if mode == '2':
+                print("История:")
+                data: List[Dict[str, Any]] = chat.get_history()
+                for message in data:
+                    if message["role"] == "user":
+                        print(f"Вы: {message['content'][0]['text']}")
+                    else:
+                        print(f"Бот: {message['content']}")
+            else:
+                print("История:")
+                data: List[Dict[str, Any]] = chat.get_history()
+                for message in data:
+                    if message["role"] == "user":
+                        print(f"Вы: {message['content']}")
+                    else:
+                        print(f"Бот: {message['content']}")
         elif question == "3":
             chat.clear_history()
         elif question == "стоп":
